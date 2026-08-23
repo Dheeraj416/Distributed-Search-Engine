@@ -1,0 +1,85 @@
+// search.proto
+//
+// The gRPC contract between the search server and any client (the CLI
+// client in src/client_main.cpp, or a future web/service client). Split
+// into two RPC families:
+//   - Indexing: IndexDocument (single doc) and IndexBatch (client-streaming,
+//     used by the bulk loader so a large corpus can be pushed over one
+//     connection instead of one round-trip per document).
+//   - Search: Search (BM25-ranked query) and GetStats (index introspection).
+
+syntax = "proto3";
+
+package dse;
+
+service SearchService {
+  // Index a single document. Idempotent: indexing the same doc_id again
+  // replaces its previous postings (see InvertedIndex::RemoveDocument in
+  // inverted_index.cpp).
+  rpc IndexDocument(IndexDocumentRequest) returns (IndexDocumentResponse);
+
+  // Client-streaming bulk indexing: the client sends many
+  // IndexDocumentRequest messages over one call and receives a single
+  // summary once the stream closes. The server fans these out across its
+  // internal thread pool (see ThreadPool in thread_pool.hpp) rather than
+  // indexing strictly one-at-a-time.
+  rpc IndexBatch(stream IndexDocumentRequest) returns (IndexBatchResponse);
+
+  // Rank and return the top_k documents for a free-text query using
+  // BM25 scoring over the inverted index, with a Redis-backed result
+  // cache in front of the scorer (see QueryEngine::Search).
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // Point-in-time introspection of the index: document/term counts and
+  // an approximate memory footprint, used by the CLI's `stats` command
+  // and by docs/API.md's worked examples.
+  rpc GetStats(StatsRequest) returns (StatsResponse);
+}
+
+message IndexDocumentRequest {
+  string doc_id = 1;
+  string title = 2;
+  string url = 3;
+  string body = 4;
+}
+
+message IndexDocumentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message IndexBatchResponse {
+  uint32 indexed_count = 1;
+  uint32 failed_count = 2;
+  double elapsed_ms = 3;
+}
+
+message SearchRequest {
+  string query = 1;
+  uint32 top_k = 2; // defaults to 10 server-side if 0
+}
+
+message SearchResult {
+  string doc_id = 1;
+  string title = 2;
+  string url = 3;
+  double score = 4;
+  string snippet = 5; // short excerpt of the body around the first matched term
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+  uint32 total_matches = 2; // candidate documents before truncating to top_k
+  double query_time_ms = 3;
+  bool cache_hit = 4;
+}
+
+message StatsRequest {}
+
+message StatsResponse {
+  uint64 total_documents = 1;
+  uint64 total_terms = 2;      // distinct terms in the vocabulary
+  uint64 total_postings = 3;   // sum of postings-list lengths across all terms
+  double average_doc_length = 4;
+  uint64 approx_index_bytes = 5;
+}

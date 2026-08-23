@@ -1,0 +1,35 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: dse-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis-data:/data
+
+  search-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dse-server
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      DSE_PORT: "50051"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DSE_SCORING_THREADS: "4"
+      DSE_INDEXING_THREADS: "4"
+    ports:
+      - "50051:50051"
+
+volumes:
+  redis-data:

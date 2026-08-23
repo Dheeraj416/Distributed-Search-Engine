@@ -1,0 +1,74 @@
+[
+  {
+    "doc_id": "doc-001",
+    "title": "Introduction to Distributed Systems",
+    "url": "https://example-notes.dev/distributed-systems-intro",
+    "body": "A distributed system is a collection of independent computers that appears to its users as a single coherent system. Distributed systems must handle partial failure, network partitions, and concurrency. Common goals include scalability, fault tolerance, and consistency. Building a distributed search engine requires careful thought about how to shard an inverted index across multiple machines while keeping query latency low."
+  },
+  {
+    "doc_id": "doc-002",
+    "title": "Understanding the Inverted Index",
+    "url": "https://example-notes.dev/inverted-index-explained",
+    "body": "An inverted index maps every term in a corpus to the list of documents that contain it, along with the term frequency in each document. This data structure is the backbone of nearly every search engine, from a small local search tool to a distributed search engine spanning thousands of machines. Building an inverted index efficiently is essential for fast full text search."
+  },
+  {
+    "doc_id": "doc-003",
+    "title": "BM25 Ranking Explained",
+    "url": "https://example-notes.dev/bm25-ranking",
+    "body": "BM25 is a bag-of-words ranking function used by search engines to estimate the relevance of documents to a given search query. It builds on the TF-IDF family of ranking functions and adds term frequency saturation and document length normalization. Most modern search engines, including large distributed search engine deployments, use BM25 or a learned ranking model built on top of it."
+  },
+  {
+    "doc_id": "doc-004",
+    "title": "Caching Search Results with Redis",
+    "url": "https://example-notes.dev/redis-search-cache",
+    "body": "Redis is an in-memory data store commonly used as a cache in front of expensive computations. In a search engine, caching the ranked results of frequent queries avoids repeating BM25 scoring work on every request. A well designed cache key normalizes the query terms so that reordered queries still hit the same cache entry, improving the hit rate of the search cache."
+  },
+  {
+    "doc_id": "doc-005",
+    "title": "gRPC and Protocol Buffers Overview",
+    "url": "https://example-notes.dev/grpc-protobuf-overview",
+    "body": "gRPC is a high performance remote procedure call framework built on top of HTTP/2 and Protocol Buffers. It supports unary calls as well as client streaming, server streaming, and bidirectional streaming, which makes it a good fit for a distributed search engine that needs to bulk upload documents efficiently using a streaming index request."
+  },
+  {
+    "doc_id": "doc-006",
+    "title": "Multithreading with a Custom Thread Pool in C++",
+    "url": "https://example-notes.dev/cpp-thread-pool",
+    "body": "A thread pool maintains a fixed set of worker threads that pull tasks from a shared queue, avoiding the overhead of creating a new thread per request. In C++ this can be implemented with std::thread, std::mutex, and std::condition_variable. A search engine can use a thread pool to parallelize BM25 scoring across many candidate documents for a single query, and separately to parallelize indexing of a large batch of documents."
+  },
+  {
+    "doc_id": "doc-007",
+    "title": "Reader Writer Locks and Concurrent Data Structures",
+    "url": "https://example-notes.dev/shared-mutex-concurrency",
+    "body": "A shared mutex, also known as a reader writer lock, allows many readers to access a data structure concurrently while writers get exclusive access. This is a natural fit for a search index, where reads (queries) vastly outnumber writes (document indexing), and using std::shared_mutex lets a distributed search engine serve many concurrent search requests without blocking on every read."
+  },
+  {
+    "doc_id": "doc-008",
+    "title": "Tokenization and Text Normalization",
+    "url": "https://example-notes.dev/tokenization-basics",
+    "body": "Tokenization splits raw text into individual terms, usually after lowercasing and stripping punctuation. Search engines often remove common stopwords such as the, and, or is, since they carry little discriminative signal. A good tokenizer is the foundation of a good inverted index, because every downstream ranking computation depends on consistent, normalized tokens."
+  },
+  {
+    "doc_id": "doc-009",
+    "title": "Scaling a Search Engine Horizontally",
+    "url": "https://example-notes.dev/scaling-search-horizontally",
+    "body": "As a corpus grows, a single machine eventually cannot hold the full inverted index in memory. A distributed search engine solves this by sharding the index across multiple nodes, either by document range or by term, and merging partial results at query time. Caching, thread pools, and efficient network protocols like gRPC all become more important as the system scales horizontally."
+  },
+  {
+    "doc_id": "doc-010",
+    "title": "Designing a Search API with Protocol Buffers",
+    "url": "https://example-notes.dev/search-api-design",
+    "body": "When designing the API contract for a search engine, it helps to separate indexing operations from query operations. A protocol buffer service definition might expose IndexDocument and IndexBatch for writes, and Search and GetStats for reads. Keeping the contract small and explicit makes it easier for client applications to integrate with the distributed search engine."
+  },
+  {
+    "doc_id": "doc-011",
+    "title": "Snippet Generation for Search Results",
+    "url": "https://example-notes.dev/snippet-generation",
+    "body": "A search result snippet gives the user a short preview of why a document matched their query, usually by locating the first occurrence of a query term in the document body and returning a window of surrounding text. Good snippet generation improves the perceived relevance of a search engine even when the underlying ranking score is identical."
+  },
+  {
+    "doc_id": "doc-012",
+    "title": "Docker Compose for Local Development",
+    "url": "https://example-notes.dev/docker-compose-local-dev",
+    "body": "Docker Compose lets developers define multi container applications, such as a search engine server alongside a Redis cache, in a single YAML file. Running docker compose up brings up the full stack locally with one command, which is especially useful for testing a distributed search engine end to end without manually installing every dependency."
+  }
+]
